@@ -1,5 +1,6 @@
 import os
 from huggingface_hub import InferenceClient
+import requests
 
 ## You need a token from https://hf.co/settings/tokens, ensure that you select 'read' as the token type. If you run this on Google Colab, you can set it up in the "settings" tab under "secrets". Make sure to call it "HF_TOKEN"
 # powershell command: $env:HF_TOKEN = "xxxx"
@@ -86,9 +87,47 @@ print(output.choices[0].message.content)
 
 # Dummy function
 def get_weather(location):
-    return f"the weather in {location} is sunny with low temperatures. \n"
+    # 1) Geocode: location name -> lat/lon
+    geo_url = (
+        "https://geocoding-api.open-meteo.com/v1/search"
+        f"?name={location}&count=1&language=en&format=json"
+    )
+    geo_resp = requests.get(geo_url, timeout=20)
+    geo_resp.raise_for_status()
+    geo = geo_resp.json()
 
-get_weather('London')
+    # Ensure we have at least one result
+    if not geo.get("results"):
+        raise ValueError(f"No geocoding results for location: {location}")
+
+    lat = geo["results"][0]["latitude"]
+    lon = geo["results"][0]["longitude"]
+
+    # 2) Forecast: lat/lon -> weather
+    forecast_url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}&longitude={lon}"
+        "&current=temperature_2m,wind_speed_10m"
+        "&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m"
+    )
+    fc_resp = requests.get(forecast_url, timeout=20)
+    fc_resp.raise_for_status()
+    forecast = fc_resp.json()
+
+    current = forecast.get("current", {})
+    result = {
+        "location": location,
+        "latitude": lat,
+        "longitude": lon,
+        "temperature_2m": current.get("temperature_2m"),
+        "wind_speed_10m": current.get("wind_speed_10m"),
+        # optionally include hourly blocks:
+        # "hourly": forecast.get("hourly", {})
+    }
+
+    return f"the weather in {location} is {current.get("temperature_2m")}degrees celsius with winds of {current.get("wind_speed_10m")}km/h. \n"
+
+#get_weather('London')
 
 messages = [
     {"role": "system", "content": SYSTEM_PROMPT},
