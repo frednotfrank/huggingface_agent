@@ -1,12 +1,8 @@
 # using input search for closest matches of chunks from a database (augmented). reply only according to the chunks retrieved.
 
 import ollama
-# Load the dataset
+# Load the dataset later once check if dog or cat
 dataset = []
-# need to specify encoding
-with open('cat-facts.txt', 'r',encoding="utf8") as file:
-  dataset = file.readlines()
-  print(f'Loaded {len(dataset)} entries')
 
 # Implement the retrieval system
 
@@ -46,6 +42,17 @@ def retrieve(query, top_n=3):
 # Chatbot
 
 input_query = input('Ask me a question: ')
+if "dog" in input_query:
+  # need to specify encoding
+  with open('dog-facts.txt', 'r', encoding="utf8") as file:
+    dataset = file.readlines()
+    print(f'Loaded {len(dataset)} entries')
+else:
+  with open('cat-facts.txt', 'r', encoding="utf8") as file:
+    dataset = file.readlines()
+    print(f'Loaded {len(dataset)} entries')
+
+
 retrieved_knowledge = retrieve(input_query)
 
 print('Retrieved knowledge:')
