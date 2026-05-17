@@ -124,7 +124,7 @@ def answer(question: str,additional_args: dict = None) -> str:
         ],
         name="gaia_solver",
         description="A GAIA benchmark solver that prioritizes ground truth and meta-searching.",
-        max_steps=12,  # Increased since it's now doing the work of two agents
+        max_steps=12,  
         verbosity_level=2, # High verbosity helps you see the tool outputs,
         executor_kwargs = {'additional_functions': {'open': open}}
     )
